@@ -37,7 +37,7 @@ version = 1.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.1.0
+requirements = python3,kivy
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -112,7 +112,7 @@ android.minapi = 21
 android.sdk = 31
 
 # (str) Android NDK version to use
-android.ndk = 25c
+android.ndk = 25b
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
 android.ndk_api = 21
@@ -210,7 +210,7 @@ android.allow_backup = True
 #p4a.setup_py = false
 
 # (str) extra command line arguments to pass when invoking pythonforandroid.toolchain
-p4a.extra_args = --ignore-setup-py
+p4a.extra_args = --use-setup-py
 
 
 #
