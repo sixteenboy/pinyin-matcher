@@ -1,0 +1,161 @@
+name: 🚀 Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # 允许手动触发
+  schedule:
+    - cron: '0 2 * * 0'  # 每周日凌晨2点自动构建
+
+jobs:
+  build:
+    name: 🏗️ Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: ☕ Install Java 8
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: 📦 Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          git \
+          unzip \
+          zip
+
+    - name: 🔧 Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install buildozer==1.5.0
+        pip install kivy==2.1.0
+        pip install cython==0.29.33
+
+    - name: 📱 Cache Android SDK
+      uses: actions/cache@v3
+      with:
+        path: ~/.buildozer
+        key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          buildozer-${{ runner.os }}-
+
+    - name: 🏗️ Build APK
+      run: |
+        echo "开始构建 APK..."
+        buildozer android debug
+
+    - name: 📋 List build output
+      run: |
+        echo "构建完成，检查输出文件："
+        ls -la
+        if [ -d "bin" ]; then
+          echo "bin 目录内容："
+          ls -la bin/
+        else
+          echo "❌ bin 目录不存在"
+        fi
+
+    - name: 📤 Upload APK artifact
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pinyin-matcher-apk-${{ github.run_number }}
+        path: bin/*.apk
+        retention-days: 30
+
+    - name: 🏷️ Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        name: 拼音匹配器 ${{ github.ref_name }}
+        body: |
+          ## 📱 拼音匹配器 Android APK
+
+          ### 🆕 新版本特性
+          - 自动构建的 Android APK
+          - 支持 Android 5.0+ 设备
+          - 包含完整的拼音数据库
+          - 智能拼音匹配功能
+          - 移动端优化界面
+
+          ### 📥 安装说明
+          1. 下载下方的 APK 文件
+          2. 在 Android 设备上允许安装未知来源应用
+          3. 安装 APK 文件
+          4. 享受拼音匹配功能
+
+          ### 🔧 技术信息
+          - 构建时间: ${{ github.event.head_commit.timestamp }}
+          - 提交哈希: ${{ github.sha }}
+          - Python 版本: 3.9
+          - Kivy 版本: 2.1.0
+          - 支持架构: ARM64, ARMv7
+          - 最低 Android 版本: 5.0 (API 21)
+
+          ### 📱 应用特点
+          - 🔍 智能拼音匹配
+          - 📊 完整拼音数据库
+          - 🎨 现代化移动端界面
+          - 🚀 高性能匹配算法
+        files: bin/*.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 💬 Comment on PR
+      if: github.event_name == 'pull_request' && success()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '🎉 APK 构建成功！可以在 [Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) 页面下载构建的 APK 文件。'
+          })
+
+    - name: 🧹 Cleanup old artifacts
+      if: github.event_name == 'schedule'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          // 清理超过30天的构建制品
+          const { data: artifacts } = await github.rest.actions.listArtifactsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            per_page: 100
+          });
+
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+          for (const artifact of artifacts.artifacts) {
+            if (new Date(artifact.created_at) < thirtyDaysAgo) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id
+              });
+              console.log(`删除旧制品: ${artifact.name}`);
+            }
+          }
