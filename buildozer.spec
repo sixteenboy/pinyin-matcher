@@ -103,16 +103,16 @@ android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 #android.library_references = @jar/my-android-library.jar
 
 # (int) Target Android API, should be as high as possible.
-android.api = 30
+android.api = 34
 
 # (int) Minimum API your APK / AAB will support.
 android.minapi = 21
 
 # (int) Android SDK version to use
-android.sdk = 30
+android.sdk = 34
 
 # (str) Android NDK version to use
-android.ndk = 23c
+android.ndk = 28c
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
 android.ndk_api = 21
@@ -213,7 +213,7 @@ p4a.branch = develop
 #p4a.setup_py = false
 
 # (str) extra command line arguments to pass when invoking pythonforandroid.toolchain
-p4a.extra_args = --ignore-setup-py --skip-distribute
+p4a.extra_args = --ignore-setup-py
 
 
 #
