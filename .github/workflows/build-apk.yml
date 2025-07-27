@@ -41,7 +41,25 @@ jobs:
           build-essential \
           git \
           unzip \
-          zip
+          zip \
+          libtool \
+          libtool-bin \
+          autotools-dev \
+          automake \
+          autoconf \
+          pkg-config \
+          libffi-dev \
+          libssl-dev \
+          zlib1g-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          libbz2-dev \
+          libreadline-dev \
+          libsqlite3-dev \
+          libgdbm-dev \
+          libdb-dev \
+          liblzma-dev \
+          uuid-dev
 
     - name: 🔧 Install Python dependencies
       run: |
@@ -67,8 +85,26 @@ jobs:
         ls -la
         echo "检查 buildozer.spec 文件："
         cat buildozer.spec | head -20
+        echo "设置构建环境..."
+        export BUILDOZER_LOG_LEVEL=2
+        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        export ACLOCAL_PATH="/usr/share/aclocal:$ACLOCAL_PATH"
+        export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH"
+        echo "JAVA_HOME: $JAVA_HOME"
+        echo "ACLOCAL_PATH: $ACLOCAL_PATH"
         echo "开始构建..."
-        buildozer android debug --verbose
+        buildozer android debug --verbose || {
+          echo "构建失败，查看详细日志..."
+          if [ -f ".buildozer/android/platform/build-*/build.log" ]; then
+            echo "=== 构建日志 ==="
+            tail -100 .buildozer/android/platform/build-*/build.log
+          fi
+          if [ -f ".buildozer/android/platform/python-for-android/dist/*/build.log" ]; then
+            echo "=== Python-for-Android 日志 ==="
+            tail -100 .buildozer/android/platform/python-for-android/dist/*/build.log
+          fi
+          exit 1
+        }
 
     - name: 📋 List build output
       if: always()
