@@ -34,6 +34,18 @@ jobs:
         distribution: 'temurin'
         java-version: '8'
 
+    - name: 🔍 Verify Java Installation
+      run: |
+        echo "验证 Java 安装..."
+        java -version
+        javac -version
+        echo "JAVA_HOME from setup-java: $JAVA_HOME"
+        ls -la $JAVA_HOME || echo "JAVA_HOME 路径不存在"
+
+        # 将正确的 JAVA_HOME 保存到环境文件
+        echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+        echo "正确的 JAVA_HOME 已保存: $JAVA_HOME"
+
     - name: 📦 Install system dependencies
       run: |
         sudo apt-get update
@@ -87,11 +99,35 @@ jobs:
         cat buildozer.spec | head -20
         echo "设置构建环境..."
         export BUILDOZER_LOG_LEVEL=2
-        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+        # 验证 JAVA_HOME 环境变量
+        echo "构建时 JAVA_HOME: $JAVA_HOME"
+        echo "验证 Java 可用性:"
+        java -version
+        ls -la "$JAVA_HOME" || echo "JAVA_HOME 路径验证失败"
+
+        # 设置其他环境变量
         export ACLOCAL_PATH="/usr/share/aclocal:$ACLOCAL_PATH"
         export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH"
-        echo "JAVA_HOME: $JAVA_HOME"
-        echo "ACLOCAL_PATH: $ACLOCAL_PATH"
+
+        echo "环境变量设置完成:"
+        echo "  JAVA_HOME: $JAVA_HOME"
+        echo "  ACLOCAL_PATH: $ACLOCAL_PATH"
+        echo "  PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+        echo "最终环境检查..."
+        echo "PATH: $PATH"
+        which java
+        which javac
+        $JAVA_HOME/bin/java -version || echo "JAVA_HOME/bin/java 不可用"
+
+        # 创建符号链接以确保 buildozer 能找到 Java
+        if [ ! -d "/usr/lib/jvm/java-8-openjdk-amd64" ] && [ -d "$JAVA_HOME" ]; then
+          echo "创建 Java 符号链接..."
+          sudo mkdir -p /usr/lib/jvm
+          sudo ln -sf "$JAVA_HOME" /usr/lib/jvm/java-8-openjdk-amd64
+          echo "符号链接已创建: /usr/lib/jvm/java-8-openjdk-amd64 -> $JAVA_HOME"
+        fi
+
         echo "开始构建..."
         buildozer android debug --verbose || {
           echo "构建失败，查看详细日志..."
