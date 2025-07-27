@@ -103,16 +103,16 @@ android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 #android.library_references = @jar/my-android-library.jar
 
 # (int) Target Android API, should be as high as possible.
-android.api = 30
+android.api = 33
 
 # (int) Minimum API your APK / AAB will support.
 android.minapi = 21
 
 # (int) Android SDK version to use
-android.sdk = 30
+android.sdk = 33
 
 # (str) Android NDK version to use
-android.ndk = 23b
+android.ndk = 25b
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
 android.ndk_api = 21
@@ -139,6 +139,10 @@ android.private_storage = True
 # the default, you will be shown the license when first running
 # buildozer.
 android.accept_sdk_license = True
+
+# (str) Bootstrap to use for android builds
+# Run `buildozer android list_bootstraps` to see available options
+p4a.bootstrap = sdl2
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
 # In past, was `android.arch` as we weren't supporting builds for multiple archs at the same time.
